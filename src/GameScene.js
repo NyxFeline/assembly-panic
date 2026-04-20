@@ -4,31 +4,32 @@ export default class GameScene extends Phaser.Scene {
     }
 
     preload() {
-        this.load.image("logo", "/assets/img/logo.png");
+        this.load.image("gear", "/assets/img/gear.png");
+        this.load.image("chip", "/assets/img/chip.png");
+        this.load.image("battery", "/assets/img/battery.png");
+        this.load.image("bolt", "/assets/img/bolt.png");
+
         this.load.audio("glitch", "/assets/sounds/glitch.ogg");
+        this.load.audio("bgm", "/assets/sounds/bgm.ogg");
+        this.load.audio("click", "/assets/sounds/click.ogg");
+        this.load.audio("error", "/assets/sounds/error.ogg");
     }
 
     create() {
-        this.add.text(250, 50, "Assembly Panic", { fontSize: "32px", color: "#ffffff" });
+        this.W = this.scale.width;
+        this.H = this.scale.height;
 
-        // Timer (top-left)
-        this.timerText = this.add.text(20, 20, "Time: 10", { fontSize: "28px", color: "#00ff88" });
-
-        // Score (top-right)
+        // State
+        this.isGameOver = false;
+        this.isReversed = false;
         this.score = 0;
-        this.scoreText = this.add.text(650, 20, "Score: 0", { fontSize: "28px", color: "#ffffff" });
-
-        // Order cần nhấn (giữa màn hình)
+        this.combo = 0;
+        this.maxTime = 10;
+        this.timeLeft = 10;
         this.targetOrder = ["A", "S", "D"];
-        this.orderText = this.add.text(200, 250, `CẦN: ${this.targetOrder.join(" - ")}`, {
-            fontSize: "36px", color: "#ffdd00"
-        });
-
-        // Input người chơi đã bấm đúng
         this.currentInput = [];
-        this.inputText = this.add.text(200, 320, "BẤM: ", { fontSize: "36px", color: "#00ccff" });
+        this.iconMap = { A: "gear", S: "chip", D: "battery", F: "bolt" };
 
-        // Keys
         this.keys = {
             A: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A),
             S: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S),
@@ -36,30 +37,161 @@ export default class GameScene extends Phaser.Scene {
             F: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.F),
         };
 
-        this.isReversed = false;
-        this.startGlitchTimer();
+        this.flashRect = this.add.rectangle(this.W / 2, this.H / 2, this.W, this.H, 0xffffff, 0)
+            .setDepth(99);
 
-        this.flashRect = this.add.rectangle(400, 300, 800, 600, 0x00ff88, 0).setAlpha(0);
-        this.isGameOver = false;
+        this.showStartScreen();
+    }
 
-        this.maxTime = 10;
-        this.timeLeft = 10;
+    showStartScreen() {
+        const cx = this.W / 2;
+
+        // Title
+        this.add.text(cx, 120, "ASSEMBLY PANIC", {
+            fontSize: "44px", color: "#00ff88", fontStyle: "bold",
+        }).setOrigin(0.5);
+
+        const keys = [
+            { key: "A", icon: "gear", label: "Gear" },
+            { key: "S", icon: "chip", label: "Chip" },
+            { key: "D", icon: "battery", label: "Battery" },
+            { key: "F", icon: "bolt", label: "Bolt" },
+        ];
+        const spacing = 130;
+        const startX = cx - (spacing * 1.5);
+        const guideY = 280;
+
+        keys.forEach(({ key, icon, label }, i) => {
+            const x = startX + i * spacing;
+            this.add.rectangle(x, guideY - 30, 52, 52, 0x223344).setOrigin(0.5);
+            this.add.text(x, guideY - 30, `[${key}]`, {
+                fontSize: "20px", color: "#ffdd00",
+            }).setOrigin(0.5);
+            this.add.image(x, guideY + 30, icon).setDisplaySize(48, 48);
+            this.add.text(x, guideY + 62, label, {
+                fontSize: "13px", color: "#aaaaaa",
+            }).setOrigin(0.5);
+        });
+
+        this.add.text(cx, 400,
+            "Nhìn icon → bấm phím đúng thứ tự\nCảnh báo đỏ = controls bị đảo!", {
+            fontSize: "16px", color: "#888888",
+            align: "center", lineSpacing: 8,
+        }).setOrigin(0.5);
+
+        const startText = this.add.text(cx, 490, "CLICK TO START", {
+            fontSize: "28px", color: "#ffffff",
+        }).setOrigin(0.5);
+
+        this.tweens.add({
+            targets: startText, alpha: 0,
+            duration: 600, yoyo: true, repeat: -1,
+        });
+
+        this.input.once("pointerdown", () => {
+            this.children.removeAll(true); // xóa hết start screen
+            this.flashRect = this.add.rectangle(this.W / 2, this.H / 2, this.W, this.H, 0xffffff, 0).setDepth(99);
+            this.startGame();
+        });
+    }
+
+    startGame() {
+        if (this.cache.audio.exists("bgm")) {
+            this.sound.play("bgm", { loop: true, volume: 0.4 });
+        }
+
+        const cx = this.W / 2;
+
+        this.timerText = this.add.text(20, 16, "TIME: 10", {
+            fontSize: "26px", color: "#00ff88",
+        }).setDepth(10);
+
+        this.scoreText = this.add.text(this.W - 20, 16, "SCORE: 0", {
+            fontSize: "26px", color: "#ffffff",
+        }).setOrigin(1, 0).setDepth(10);
+
+        this.comboText = this.add.text(20, 50, "", {
+            fontSize: "18px", color: "#ffaa00",
+        }).setDepth(10);
+
+        this.add.text(cx, 160, "CẦN:", {
+            fontSize: "22px", color: "#ffdd00",
+        }).setOrigin(0.5);
+
+        this.orderIcons = [];
+        this.orderIconKeys = [];
+        this.renderOrderIcons();
+
+        this.inputText = this.add.text(cx, 380, "", {
+            fontSize: "28px", color: "#00ccff",
+        }).setOrigin(0.5).setDepth(10);
+
+        this.drawKeyBar();
+
         this.startTimer();
+        this.startGlitchTimer();
+    }
+
+    drawKeyBar() {
+        const keys = [
+            { key: "A", icon: "gear" },
+            { key: "S", icon: "chip" },
+            { key: "D", icon: "battery" },
+            { key: "F", icon: "bolt" },
+        ];
+        const spacing = 100;
+        const startX = this.W / 2 - spacing * 1.5;
+        const y = this.H - 48;
+
+        this.add.rectangle(this.W / 2, y, this.W, 72, 0x111122).setOrigin(0.5);
+
+        keys.forEach(({ key, icon }, i) => {
+            const x = startX + i * spacing;
+            this.add.image(x - 18, y, icon).setDisplaySize(30, 30).setAlpha(0.7);
+            this.add.text(x + 14, y, `[${key}]`, {
+                fontSize: "16px", color: "#666688",
+            }).setOrigin(0, 0.5);
+        });
+    }
+
+    renderOrderIcons() {
+        this.orderIcons.forEach(o => o.destroy());
+        this.orderIconKeys.forEach(o => o.destroy());
+        this.orderIcons = [];
+        this.orderIconKeys = [];
+
+        const cx = this.W / 2;
+        const spacing = 120;
+        const startX = cx - (this.targetOrder.length - 1) * spacing / 2;
+        const y = 270;
+
+        this.targetOrder.forEach((key, i) => {
+            const icon = this.add.image(startX + i * spacing, y, this.iconMap[key])
+                .setDisplaySize(80, 80);
+            const label = this.add.text(startX + i * spacing, y + 52, key, {
+                fontSize: "16px", color: "#888888",
+            }).setOrigin(0.5);
+            this.orderIcons.push(icon);
+            this.orderIconKeys.push(label);
+        });
+    }
+
+    updateOrderUI() {
+        this.orderIcons.forEach((icon, i) => {
+            icon.setTint(i < this.currentInput.length ? 0x00ff88 : 0xffffff);
+        });
     }
 
     startTimer() {
         this.timerEvent = this.time.addEvent({
-            delay: 1000,
-            callback: this.onTick,
-            callbackScope: this,
-            loop: true,
+            delay: 1000, callback: this.onTick,
+            callbackScope: this, loop: true,
         });
     }
 
     onTick() {
         this.timeLeft -= 1;
-        // Hiển thị ceil để tránh số lẻ float
-        this.timerText.setText(`Time: ${Math.ceil(this.timeLeft)}`);
+        this.timerText.setText(`TIME: ${Math.ceil(this.timeLeft)}`);
         this.timerText.setColor(this.timeLeft <= 3 ? "#ff4444" : "#00ff88");
 
         if (this.timeLeft <= 0 && !this.isGameOver) {
@@ -69,92 +201,98 @@ export default class GameScene extends Phaser.Scene {
         }
     }
 
-    addTime(seconds) {
-        this.timeLeft += seconds;
-        this.timerText.setText(`Time: ${this.timeLeft}`);
-
-        this.timerText.setColor(this.timeLeft > 3 ? "#00ff88" : "#ff4444");
-    }
-
     handleInput(key) {
         if (this.isGameOver) return;
 
-        const nextIndex = this.currentInput.length;
-        const expected = this.targetOrder[nextIndex];
-
+        const expected = this.targetOrder[this.currentInput.length];
         if (!expected) return;
 
         if (key === expected) {
             this.currentInput.push(key);
+            this.inputText.setText(this.currentInput.join("  "));
+            this.updateOrderUI();
 
-            // UPDATE inputText theo từng phím đúng
-            this.inputText.setText(`BẤM: ${this.currentInput.join(" - ")}`);
+            this.flashRect.setFillStyle(0x00ff88, 0.25);
+            this.time.delayedCall(60, () => this.flashRect.setAlpha(0));
 
-            this.flashRect.setAlpha(0.3);
-            this.time.delayedCall(100, () => this.flashRect.setAlpha(0));
+            if (this.cache.audio.exists("click")) this.sound.play("click", { volume: 0.6 });
 
             if (this.currentInput.length === this.targetOrder.length) {
-                this.score += 10;
-                this.scoreText.setText(`Score: ${this.score}`);
-                this.maxTime = Math.max(3, this.maxTime - 0.5);
+                this.cameras.main.flash(100, 255, 255, 255, false);
+                this.combo += 1;
+                this.score += 10 * this.combo;
+                this.scoreText.setText(`SCORE: ${this.score}`);
+                this.comboText.setText(`COMBO x${this.combo}`);
+
+                if (this.combo >= 3) {
+                    this.tweens.add({
+                        targets: this.comboText,
+                        scaleX: 1.6, scaleY: 1.6,
+                        duration: 120, yoyo: true,
+                    });
+                }
+
                 this.resetOrder();
             }
         } else {
-            this.cameras.main.shake(100, 0.01);
+            this.cameras.main.shake(150, 0.015);
+            this.flashRect.setFillStyle(0xff2200, 0.3);
+            this.time.delayedCall(80, () => this.flashRect.setAlpha(0));
+            this.cameras.main.shake(120, 0.012);
+
+            if (this.cache.audio.exists("error")) this.sound.play("error", { volume: 0.6 });
+
+            this.combo = 0;
+            this.comboText.setText("");
             this.currentInput = [];
-            this.inputText.setText("BẤM: ");
+            this.inputText.setText("");
+            this.updateOrderUI();
         }
     }
 
-    startGlitchTimer() {
-        const delay = Phaser.Math.Between(5000, 8000);
+    resetOrder() {
+        this.targetOrder = Phaser.Utils.Array.Shuffle(["A", "S", "D", "F"]).slice(0, 3);
+        this.currentInput = [];
+        this.renderOrderIcons();
+        this.inputText.setText("");
+        this.timeLeft = this.maxTime;
+        this.maxTime = Math.max(3, this.maxTime - 0.5);
+        this.timerText.setText(`TIME: ${Math.ceil(this.timeLeft)}`);
+        this.timerText.setColor("#00ff88");
+    }
 
-        this.time.delayedCall(delay, () => {
+    startGlitchTimer() {
+        this.time.delayedCall(Phaser.Math.Between(5000, 8000), () => {
             if (this.isGameOver) return;
 
-            const redFlash = this.add.rectangle(400, 300, 800, 600, 0xff0000, 0.15);
-
-            const warnText = this.add.text(400, 300, "SYSTEM ERROR!\nREVERSE CONTROL", {
-                fontSize: "32px",
-                color: "#ff4444",
-                align: "center",
-            }).setOrigin(0.5);
+            const redFlash = this.add.rectangle(this.W / 2, this.H / 2, this.W, this.H, 0xff0000, 0.12).setDepth(50);
+            const warnText = this.add.text(this.W / 2, this.H / 2 - 30,
+                "⚠ SYSTEM ERROR\nREVERSE CONTROL", {
+                fontSize: "30px", color: "#ff4444", align: "center",
+            }).setOrigin(0.5).setDepth(51);
 
             const warnTween = this.tweens.add({
-                targets: warnText,
-                alpha: 0,
-                duration: 200,
-                yoyo: true,
-                repeat: -1,
+                targets: warnText, alpha: 0, duration: 200, yoyo: true, repeat: -1,
             });
 
             this.time.delayedCall(1000, () => {
+                if (this.isGameOver) { redFlash.destroy(); warnText.destroy(); return; }
 
-                warnTween.stop();
-                warnText.destroy();
-                redFlash.destroy();
-
+                warnTween.stop(); warnText.destroy(); redFlash.destroy();
                 this.isReversed = true;
 
-                if (this.cache.audio.exists("glitch")) {
-                    this.sound.play("glitch", { loop: true, volume: 0.5 });
-                }
+                if (this.cache.audio.exists("glitch")) this.sound.play("glitch", { loop: true, volume: 0.5 });
 
-                this.glitchText = this.add.text(20, 55, "[ REVERSED ]", {
-                    fontSize: "16px", color: "#ff4444",
-                });
+                this.glitchText = this.add.text(20, 78, "[ REVERSED ]", {
+                    fontSize: "15px", color: "#ff4444",
+                }).setDepth(10);
                 this.glitchTween = this.tweens.add({
-                    targets: this.glitchText,
-                    alpha: 0, duration: 300, yoyo: true, repeat: -1,
+                    targets: this.glitchText, alpha: 0, duration: 300, yoyo: true, repeat: -1,
                 });
 
                 this.time.delayedCall(3000, () => {
                     this.isReversed = false;
-
-                    if (this.cache.audio.exists("glitch")) {
-                        this.sound.stopByKey("glitch");
-                    }
-
+                    if (this.cache.audio.exists("glitch")) this.sound.stopByKey("glitch");
                     this.glitchTween.stop();
                     this.glitchText.destroy();
                     this.startGlitchTimer();
@@ -163,43 +301,50 @@ export default class GameScene extends Phaser.Scene {
         });
     }
 
-    resetOrder() {
-        const parts = ["A", "S", "D", "F"];
-        this.targetOrder = Phaser.Utils.Array.Shuffle([...parts]).slice(0, 3);
-        this.currentInput = [];
-
-        // UPDATE orderText để hiện thứ tự mới
-        this.orderText.setText(`CẦN: ${this.targetOrder.join(" - ")}`);
-        this.inputText.setText("BẤM: ");
-
-        this.timeLeft = this.maxTime;
-        this.timerText.setText(`Time: ${Math.ceil(this.timeLeft)}`);
-        this.timerText.setColor("#00ff88");
-    }
-
     gameOver() {
         this.isGameOver = true;
         this.input.keyboard.enabled = false;
-
         if (this.timerEvent) this.timerEvent.remove();
-
-        this.isReversed = false;
         if (this.glitchTween) this.glitchTween.stop();
         if (this.glitchText) this.glitchText.destroy();
         if (this.cache.audio.exists("glitch")) this.sound.stopByKey("glitch");
-
+        if (this.cache.audio.exists("bgm")) this.sound.stopByKey("bgm");
         this.time.removeAllEvents();
 
-        this.add.text(200, 400, "GAME OVER", { fontSize: "48px", color: "#ff0000" });
-        this.add.text(260, 460, `Score: ${this.score}`, { fontSize: "32px", color: "#ffffff" });
+        this.cameras.main.setBackgroundColor("#0000aa");
+        this.children.list.forEach(child => child.setVisible(false));
+
+        const bsodContent = [
+            ":( YOUR ROBOT HAS ENCOUNTERED AN ERROR",
+            "",
+            "FATAL ERROR: CONSCIOUSNESS_DELETED",
+            "",
+            `SCORE            : ${this.score}`,
+            `COMBO MAX        : x${this.combo}`,
+            "",
+            "A critical process has stopped.",
+            "Collecting error data...",
+            "",
+            "Press  [R]  TO REBOOT SYSTEM",
+        ].join("\n");
+
+        this.add.text(80, 80, bsodContent, {
+            fontSize: "18px",
+            color: "#ffffff",
+            fontFamily: "Courier, monospace",
+            lineSpacing: 10,
+            align: "left",
+        }).setDepth(100);
+
+        this.input.keyboard.enabled = true;
+        const rKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R);
+        rKey.once("down", () => this.scene.restart());
     }
 
     update() {
         const { JustDown } = Phaser.Input.Keyboard;
-
         const reverseMap = { A: "D", D: "A", S: "F", F: "S" };
-
-        const translate = (key) => this.isReversed ? reverseMap[key] : key;
+        const translate = (k) => this.isReversed ? reverseMap[k] : k;
 
         if (JustDown(this.keys.A)) this.handleInput(translate("A"));
         if (JustDown(this.keys.S)) this.handleInput(translate("S"));
