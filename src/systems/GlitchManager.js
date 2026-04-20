@@ -1,3 +1,5 @@
+import EventBus from "./EventBus.js";
+
 export default class GlitchManager {
     constructor(scene) {
         this.scene = scene;
@@ -37,6 +39,7 @@ export default class GlitchManager {
                 redFlash.destroy();
 
                 this.isReversed = true;
+                EventBus.emit("glitch:start");
 
                 if (this.scene.cache.audio.exists("glitch")) {
                     this.scene.sound.play("glitch", { loop: true, volume: 0.5 });
@@ -54,6 +57,7 @@ export default class GlitchManager {
 
                 this.scene.time.delayedCall(3000, () => {
                     this.isReversed = false;
+                    EventBus.emit("glitch:end");
 
                     if (this.scene.cache.audio.exists("glitch")) {
                         this.scene.sound.stopByKey("glitch");

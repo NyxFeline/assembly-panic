@@ -32,10 +32,100 @@ export default class UIScene extends Phaser.Scene {
             this.comboText.setText(`CHAIN STATUS: x${combo}`);
         });
 
-        EventBus.on("game:over", () => {
+        EventBus.on("game:over", ({ score, combo }) => {
             this.timerText.setVisible(false);
             this.scoreText.setVisible(false);
             this.comboText.setVisible(false);
+            this.glitchWarning.setVisible(false);
+            if (this.glitchWarningTween) this.glitchWarningTween.stop();
+
+            this.add.rectangle(
+                this.scale.width / 2, this.scale.height / 2,
+                this.scale.width, this.scale.height,
+                0x0000aa
+            ).setDepth(50);
+
+            const bsodLines = [
+                ":( YOUR ROBOT HAS ENCOUNTERED AN ERROR",
+                "",
+                "FATAL ERROR: CONSCIOUSNESS_DELETED",
+                "",
+                `OUTPUT SCORE     : ${score}`,
+                `COMBO MAX        : x${combo}`,
+                "",
+                "A critical process has stopped.",
+                "Collecting error data...",
+                "",
+            ].join("\n");
+
+            const bsodText = this.add.text(80, 80, "", {
+                fontSize: "18px",
+                color: "#ffffff",
+                fontFamily: "Courier, monospace",
+                lineSpacing: 10,
+                align: "left",
+            }).setDepth(51);
+
+            let charIndex = 0;
+            const typeEvent = this.time.addEvent({
+                delay: 18,
+                repeat: bsodLines.length - 1,
+                callback: () => {
+                    charIndex++;
+                    bsodText.setText(bsodLines.substring(0, charIndex));
+
+                    if (charIndex >= bsodLines.length) {
+                        typeEvent.remove();
+
+                        const rebootText = this.add.text(80, bsodText.y + bsodText.height + 16,
+                            "Press  [R]  TO REBOOT SYSTEM", {
+                            fontSize: "18px",
+                            color: "#ffffff",
+                            fontFamily: "Courier, monospace",
+                        }).setDepth(51);
+
+                        this.tweens.add({
+                            targets: rebootText, alpha: 0,
+                            duration: 500, yoyo: true, repeat: -1,
+                        });
+
+                        const rKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R);
+                        rKey.once("down", () => {
+                            this.scene.stop("UIScene");
+                            this.scene.start("GameScene");
+                        });
+                    }
+                },
+            });
+        });
+
+        this.glitchWarning = this.add.text(this.scale.width / 2, this.scale.height / 2 - 30,
+            "⚠ INPUT MATRIX INVERTED ⚠", {
+            fontSize: "22px", color: "#ff4444", align: "center",
+        }).setOrigin(0.5).setDepth(20).setVisible(false);
+
+        this.glitchWarningTween = null;
+
+        EventBus.on("glitch:start", () => {
+            this.timerText.setColor("#ff4444");
+            this.scoreText.setColor("#ff4444");
+            this.comboText.setColor("#ff4444");
+            this.glitchWarning.setVisible(true);
+            this.glitchWarningTween = this.tweens.add({
+                targets: this.glitchWarning, alpha: 0,
+                duration: 300, yoyo: true, repeat: -1,
+            });
+        });
+
+        EventBus.on("glitch:end", () => {
+            this.timerText.setColor("#00ff88");
+            this.scoreText.setColor("#ffffff");
+            this.comboText.setColor("#ffaa00");
+            this.glitchWarning.setVisible(false);
+            if (this.glitchWarningTween) {
+                this.glitchWarningTween.stop();
+                this.glitchWarning.setAlpha(1);
+            }
         });
 
         this.events.on("shutdown", () => {
@@ -43,6 +133,8 @@ export default class UIScene extends Phaser.Scene {
             EventBus.off("score:changed");
             EventBus.off("combo:changed");
             EventBus.off("game:over");
+            EventBus.off("glitch:start");
+            EventBus.off("glitch:end");
         });
     }
 }
