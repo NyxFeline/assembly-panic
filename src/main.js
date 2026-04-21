@@ -1,4 +1,5 @@
 import * as Phaser from "phaser";
+import BootScene from "./scenes/BootScene.js";
 import GameScene from "./GameScene.js";
 import UIScene from "./scenes/UIScene.js";
 
@@ -8,9 +9,23 @@ const config = {
   height: 600,
   backgroundColor: "#1a1a2e",
   pixelArt: true,
-  scene: [GameScene, UIScene],
+  parent: "app",
+  audio: {
+    disableWebAudio: false,
+  },
+  scene: [BootScene, GameScene, UIScene],
 };
 
-document.fonts.ready.then(() => {
-  new Phaser.Game(config);
-});
+const initGame = () => {
+  if (!window.game) {
+    window.game = new Phaser.Game(config);
+  }
+};
+
+if (document.fonts) {
+  document.fonts.load('1em "Jersey 10"')
+    .then(() => initGame())
+    .catch(() => initGame());
+} else {
+  initGame();
+}

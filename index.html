@@ -2,12 +2,24 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="public/assets/img/logo.png" />
+    <link rel="icon" type="image/svg+xml" href="/assets/img/logo.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Assembly Panic</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Jersey+10&display=swap" rel="stylesheet" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Jersey+10&display=block" rel="stylesheet">
+    <style>
+      @font-face {
+        font-family: 'Jersey 10';
+        src: url('/assets/fonts/Jersey10-Regular.ttf') format('truetype');
+        font-display: block;
+      }
+      body { 
+        background: #1a1a2e; 
+        margin: 0; 
+        overflow: hidden; 
+      }
+  </style>
   </head>
   <body>
     <div id="app"></div>

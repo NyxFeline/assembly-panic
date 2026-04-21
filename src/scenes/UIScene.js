@@ -8,22 +8,29 @@ export default class UIScene extends Phaser.Scene {
 
     create() {
         this.timerText = this.add.text(20, 16, "SYS TIMER: 10", {
-            fontSize: "26px",
-            color: "#00ff88",
+            fontSize: "26px", color: "#00ff88",
             fontFamily: "Courier, monospace",
         }).setDepth(10);
 
         this.scoreText = this.add.text(this.scale.width - 20, 16, "OUTPUT SCORE: 0", {
-            fontSize: "26px",
-            color: "#ffffff",
+            fontSize: "26px", color: "#ffffff",
             fontFamily: "Courier, monospace",
         }).setOrigin(1, 0).setDepth(10);
 
         this.comboText = this.add.text(20, 50, "CHAIN STATUS: x0", {
-            fontSize: "18px",
-            color: "#ffaa00",
+            fontSize: "18px", color: "#ffaa00",
             fontFamily: "Courier, monospace",
         }).setDepth(10);
+
+        this.glitchWarning = this.add.text(
+            this.scale.width / 2, this.scale.height / 2 - 40,
+            "⚠  INPUT MATRIX INVERTED  ⚠\n[A] = [D]     [S] = [F]", {
+            fontSize: "22px", color: "#ff4444",
+            fontFamily: '"Jersey 10", Courier, monospace',
+            align: "center", lineSpacing: 6, resolution: 2,
+        }).setOrigin(0.5).setDepth(20).setVisible(false);
+
+        this.glitchWarningTween = null;
 
         EventBus.on("timer:changed", (time, color) => {
             this.timerText.setText(`SYS TIMER: ${Math.ceil(time)}`);
@@ -47,8 +54,7 @@ export default class UIScene extends Phaser.Scene {
 
             this.add.rectangle(
                 this.scale.width / 2, this.scale.height / 2,
-                this.scale.width, this.scale.height,
-                0x0000aa
+                this.scale.width, this.scale.height, 0x0000aa
             ).setDepth(50);
 
             const bsodLines = [
@@ -65,11 +71,9 @@ export default class UIScene extends Phaser.Scene {
             ].join("\n");
 
             const bsodText = this.add.text(80, 80, "", {
-                fontSize: "18px",
-                color: "#ffffff",
+                fontSize: "18px", color: "#ffffff",
                 fontFamily: "Courier, monospace",
-                lineSpacing: 10,
-                align: "left",
+                lineSpacing: 10, align: "left",
             }).setDepth(51);
 
             let charIndex = 0;
@@ -86,8 +90,7 @@ export default class UIScene extends Phaser.Scene {
                         const rebootText = this.add.text(
                             80, bsodText.y + bsodText.height + 16,
                             "Press  [R]  TO REBOOT SYSTEM", {
-                            fontSize: "18px",
-                            color: "#ffffff",
+                            fontSize: "18px", color: "#ffffff",
                             fontFamily: "Courier, monospace",
                         }).setDepth(51);
 
@@ -100,6 +103,7 @@ export default class UIScene extends Phaser.Scene {
                             Phaser.Input.Keyboard.KeyCodes.R
                         );
                         rKey.once("down", () => {
+                            EventBus.removeAllListeners();
                             this.scene.stop("UIScene");
                             this.scene.start("GameScene");
                         });
@@ -107,19 +111,6 @@ export default class UIScene extends Phaser.Scene {
                 },
             });
         });
-
-        this.glitchWarning = this.add.text(
-            this.scale.width / 2, this.scale.height / 2 - 40,
-            "⚠  INPUT MATRIX INVERTED  ⚠\n[A]↔[D]     [S]↔[F]", {
-            fontSize: "22px",
-            color: "#ff4444",
-            fontFamily: "\"Jersey 10\", Courier, monospace",
-            align: "center",
-            lineSpacing: 6,
-            resolution: 2,
-        }).setOrigin(0.5).setDepth(20).setVisible(false);
-
-        this.glitchWarningTween = null;
 
         EventBus.on("glitch:start", () => {
             this.timerText.setColor("#ff4444");

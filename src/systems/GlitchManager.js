@@ -1,4 +1,5 @@
 import EventBus from "./EventBus.js";
+import { GLITCH_DURATION } from "../config/constants.js";
 
 export default class GlitchManager {
     constructor(scene) {
@@ -6,10 +7,16 @@ export default class GlitchManager {
         this.isReversed = false;
         this.glitchText = null;
         this.glitchTween = null;
+
+        this._timer1 = null;
+        this._timer2 = null;
+        this._timer3 = null;
+
+        this.glitchSound = null;
     }
 
     startGlitchTimer() {
-        this.scene.time.delayedCall(Phaser.Math.Between(5000, 8000), () => {
+        this._timer1 = this.scene.time.delayedCall(Phaser.Math.Between(5000, 8000), () => {
             if (this.scene.isGameOver) return;
 
             const redFlash = this.scene.add
@@ -27,7 +34,7 @@ export default class GlitchManager {
                 targets: warnText, alpha: 0, duration: 200, yoyo: true, repeat: -1,
             });
 
-            this.scene.time.delayedCall(1000, () => {
+            this._timer2 = this.scene.time.delayedCall(1000, () => {
                 if (this.scene.isGameOver) {
                     redFlash.destroy();
                     warnText.destroy();
@@ -42,8 +49,10 @@ export default class GlitchManager {
                 EventBus.emit("glitch:start");
 
                 if (this.scene.cache.audio.exists("glitch")) {
-                    this.scene.sound.play("glitch", { loop: true, volume: 0.5 });
+                    this.glitchSound = this.scene.sound.add("glitch");
+                    this.glitchSound.play({ loop: true, volume: 0.5 });
                 }
+
 
                 this.glitchText = this.scene.add
                     .text(20, 78, "[ REVERSED ]", {
@@ -55,12 +64,17 @@ export default class GlitchManager {
                     targets: this.glitchText, alpha: 0, duration: 300, yoyo: true, repeat: -1,
                 });
 
-                this.scene.time.delayedCall(3000, () => {
+                this._timer3 = this.scene.time.delayedCall(GLITCH_DURATION, () => {
                     this.isReversed = false;
                     EventBus.emit("glitch:end");
 
                     if (this.scene.cache.audio.exists("glitch")) {
                         this.scene.sound.stopByKey("glitch");
+                    }
+
+                    if (this.glitchSound && this.glitchSound.isPlaying) {
+                        this.glitchSound.stop();
+                        this.glitchSound = null;
                     }
 
                     this.glitchTween.stop();
@@ -75,11 +89,34 @@ export default class GlitchManager {
     }
 
     stop() {
+        if (this._timer1) {
+            this._timer1.remove();
+            this._timer1 = null;
+        }
+        if (this._timer2) {
+            this._timer2.remove();
+            this._timer2 = null;
+        }
+        if (this._timer3) {
+            this._timer3.remove();
+            this._timer3 = null;
+        }
+
         if (this.glitchTween) this.glitchTween.stop();
         if (this.glitchText) this.glitchText.destroy();
-        if (this.scene.cache.audio.exists("glitch")) {
-            this.scene.sound.stopByKey("glitch");
+
+        if (this.glitchSound && this.glitchSound.isPlaying) {
+            this.scene.tweens.add({
+                targets: this.glitchSound,
+                volume: 0,
+                duration: 100,
+                onComplete: () => {
+                    this.glitchSound.stop();
+                    this.glitchSound = null;
+                },
+            });
         }
+
         this.isReversed = false;
         this.glitchText = null;
         this.glitchTween = null;

@@ -1,15 +1,6 @@
 import * as Phaser from "phaser";
 import EventBus from "./EventBus.js";
-
-const PIXEL_FONT = '"Jersey 10", Courier, monospace';
-const TEXT_STROKE = { stroke: "#000000", strokeThickness: 3 };
-
-const PART_MAP = {
-    A: { variants: ["head_1", "head_1a", "head_2", "head_3", "head_4", "head_4a", "head_5", "head_6", "head_7"], dx: 5, dy: 12, size: [298, 278] },
-    S: { variants: ["track_1", "track_2"], dx: -1, dy: 44, size: [182, 97] },
-    D: { variants: ["side_1", "side_2", "side_2a", "side_3", "side_4"], dx: 9, dy: -2, size: [188, 208] },
-    F: { variants: ["back_1", "back_2", "back_3", "back_4", "back_5", "back_6"], dx: 10, dy: -9, size: [260, 280] },
-};
+import { PIXEL_FONT, TEXT_STROKE, PART_MAP, REVERSE_MAP } from "../config/constants.js";
 
 export default class InputSystem {
     constructor(scene) {
@@ -84,8 +75,7 @@ export default class InputSystem {
             .rectangle(this.scene.W / 2, y, this.scene.W, 90, 0x0d1117)
             .setOrigin(0.5).setDepth(5);
 
-        partKeys.forEach((key) => {
-            const i = partKeys.indexOf(key);
+        partKeys.forEach((key, i) => {
             const x = startX + i * spacing;
 
             const bg = this.scene.add
@@ -178,6 +168,23 @@ export default class InputSystem {
                 onComplete: () => { part.sprite.x = ox; },
             });
         }
+
+        Object.values(this.attachedParts).forEach(s => {
+            this.scene.tweens.add({
+                targets: s,
+                alpha: 0,
+                duration: 150,
+                onComplete: () => s.destroy(),
+            });
+        });
+
+        this.attachedParts = {};
+
+        this.scene.tweens.add({
+            targets: this.scene.robotBase,
+            alpha: 0.2,
+            duration: 200,
+        });
 
         this.scene.cameras.main.shake(140, 0.013);
         this.scene.flashRect.setFillStyle(0xff2200, 0.3);
@@ -294,8 +301,7 @@ export default class InputSystem {
 
     update() {
         const { JustDown } = Phaser.Input.Keyboard;
-        const reverseMap = { A: "D", D: "A", S: "F", F: "S" };
-        const translate = (k) => this.scene.glitchManager.isReversed ? reverseMap[k] : k;
+        const translate = (k) => this.scene.glitchManager.isReversed ? REVERSE_MAP[k] : k;
 
         if (JustDown(this.keys.A)) this.handleInput(translate("A"));
         if (JustDown(this.keys.S)) this.handleInput(translate("S"));
