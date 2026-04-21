@@ -1,6 +1,10 @@
 import * as Phaser from "phaser";
 import EventBus from "./EventBus.js";
-import { PIXEL_FONT, TEXT_STROKE, PART_MAP, REVERSE_MAP } from "../config/constants.js";
+import {
+    PIXEL_FONT, TEXT_STROKE, PART_MAP, REVERSE_MAP,
+    SLOT_SPACING, SLOT_Y, PART_BAR_SPACING,
+    TIME_DECREASE_STEP, MIN_ROUND_TIME,
+} from "../config/constants.js";
 
 export default class InputSystem {
     constructor(scene) {
@@ -35,8 +39,8 @@ export default class InputSystem {
 
     initSlots() {
         const cx = this.scene.W / 2;
-        const spacing = 160;
-        const y = 260;
+        const spacing = SLOT_SPACING;
+        const y = SLOT_Y;
         const startX = cx - (this.targetOrder.length - 1) * spacing / 2;
 
         this.slots = this.targetOrder.map((expectedKey, i) => {
@@ -67,7 +71,7 @@ export default class InputSystem {
 
     initParts() {
         const partKeys = ["A", "S", "D", "F"];
-        const spacing = 150;
+        const spacing = PART_BAR_SPACING;
         const startX = this.scene.W / 2 - (partKeys.length - 1) * spacing / 2;
         const y = this.scene.H - 55;
 
@@ -295,7 +299,7 @@ export default class InputSystem {
         this.initSlots();
 
         this.scene.timeLeft = this.scene.maxTime;
-        this.scene.maxTime = Math.max(3, this.scene.maxTime - 0.5);
+        this.scene.maxTime = Math.max(MIN_ROUND_TIME, this.scene.maxTime - TIME_DECREASE_STEP);
         EventBus.emit("timer:changed", this.scene.timeLeft, "#00ff88");
     }
 

@@ -134,7 +134,7 @@ export default class BootScene extends Phaser.Scene {
             align: "center",
         }).setOrigin(0.5).setDepth(5);
 
-        const warnTween = this.tweens.add({
+        this.warnTween = this.tweens.add({
             targets: warnText,
             alpha: 0.15,
             duration: 500,
@@ -156,7 +156,7 @@ export default class BootScene extends Phaser.Scene {
             ...TEXT_STROKE,
         }).setOrigin(0.5).setDepth(5);
 
-        const btnTween = this.tweens.add({
+        this.btnTween = this.tweens.add({
             targets: [btnBg, btnText],
             alpha: 0.25,
             duration: 600,
@@ -178,8 +178,8 @@ export default class BootScene extends Phaser.Scene {
                 this.sound.context.resume();
             }
 
-            warnTween.stop();
-            btnTween.stop();
+            this.warnTween?.stop();
+            this.btnTween?.stop();
 
             this.scene.start("GameScene");
         });

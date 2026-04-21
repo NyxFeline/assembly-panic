@@ -73,7 +73,6 @@ export default class GameScene extends Phaser.Scene {
             Object.values(this.inputSystem.keys).forEach(k => k.enabled = false);
         }
 
-        if (this.timerEvent) this.timerEvent.remove();
         this.glitchManager.stop();
         if (this.cache.audio.exists("bgm")) this.sound.stopByKey("bgm");
         this.time.removeAllEvents();

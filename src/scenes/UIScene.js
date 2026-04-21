@@ -1,5 +1,6 @@
 import * as Phaser from "phaser";
 import EventBus from "../systems/EventBus";
+import { PIXEL_FONT } from "../config/constants.js";
 
 export default class UIScene extends Phaser.Scene {
     constructor() {
@@ -9,24 +10,24 @@ export default class UIScene extends Phaser.Scene {
     create() {
         this.timerText = this.add.text(20, 16, "SYS TIMER: 10", {
             fontSize: "26px", color: "#00ff88",
-            fontFamily: "Courier, monospace",
+            fontFamily: PIXEL_FONT,
         }).setDepth(10);
 
         this.scoreText = this.add.text(this.scale.width - 20, 16, "OUTPUT SCORE: 0", {
             fontSize: "26px", color: "#ffffff",
-            fontFamily: "Courier, monospace",
+            fontFamily: PIXEL_FONT,
         }).setOrigin(1, 0).setDepth(10);
 
         this.comboText = this.add.text(20, 50, "CHAIN STATUS: x0", {
             fontSize: "18px", color: "#ffaa00",
-            fontFamily: "Courier, monospace",
+            fontFamily: PIXEL_FONT,
         }).setDepth(10);
 
         this.glitchWarning = this.add.text(
             this.scale.width / 2, this.scale.height / 2 - 40,
             "⚠  INPUT MATRIX INVERTED  ⚠\n[A] = [D]     [S] = [F]", {
             fontSize: "22px", color: "#ff4444",
-            fontFamily: '"Jersey 10", Courier, monospace',
+            fontFamily: PIXEL_FONT,
             align: "center", lineSpacing: 6, resolution: 2,
         }).setOrigin(0.5).setDepth(20).setVisible(false);
 
@@ -72,7 +73,7 @@ export default class UIScene extends Phaser.Scene {
 
             const bsodText = this.add.text(80, 80, "", {
                 fontSize: "18px", color: "#ffffff",
-                fontFamily: "Courier, monospace",
+                fontFamily: PIXEL_FONT,
                 lineSpacing: 10, align: "left",
             }).setDepth(51);
 
@@ -91,7 +92,7 @@ export default class UIScene extends Phaser.Scene {
                             80, bsodText.y + bsodText.height + 16,
                             "Press  [R]  TO REBOOT SYSTEM", {
                             fontSize: "18px", color: "#ffffff",
-                            fontFamily: "Courier, monospace",
+                            fontFamily: PIXEL_FONT,
                         }).setDepth(51);
 
                         this.tweens.add({

@@ -10,6 +10,10 @@ const config = {
   backgroundColor: "#1a1a2e",
   pixelArt: true,
   parent: "app",
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+  },
   audio: {
     disableWebAudio: false,
   },

@@ -1,5 +1,9 @@
+import * as Phaser from "phaser";
 import EventBus from "./EventBus.js";
-import { GLITCH_DURATION } from "../config/constants.js";
+import {
+    GLITCH_DURATION,
+    GLITCH_MIN_DELAY, GLITCH_MAX_DELAY, GLITCH_TELEGRAPH,
+} from "../config/constants.js";
 
 export default class GlitchManager {
     constructor(scene) {
@@ -16,7 +20,7 @@ export default class GlitchManager {
     }
 
     startGlitchTimer() {
-        this._timer1 = this.scene.time.delayedCall(Phaser.Math.Between(5000, 8000), () => {
+        this._timer1 = this.scene.time.delayedCall(Phaser.Math.Between(GLITCH_MIN_DELAY, GLITCH_MAX_DELAY), () => {
             if (this.scene.isGameOver) return;
 
             const redFlash = this.scene.add
@@ -34,7 +38,7 @@ export default class GlitchManager {
                 targets: warnText, alpha: 0, duration: 200, yoyo: true, repeat: -1,
             });
 
-            this._timer2 = this.scene.time.delayedCall(1000, () => {
+            this._timer2 = this.scene.time.delayedCall(GLITCH_TELEGRAPH, () => {
                 if (this.scene.isGameOver) {
                     redFlash.destroy();
                     warnText.destroy();
@@ -67,10 +71,6 @@ export default class GlitchManager {
                 this._timer3 = this.scene.time.delayedCall(GLITCH_DURATION, () => {
                     this.isReversed = false;
                     EventBus.emit("glitch:end");
-
-                    if (this.scene.cache.audio.exists("glitch")) {
-                        this.scene.sound.stopByKey("glitch");
-                    }
 
                     if (this.glitchSound && this.glitchSound.isPlaying) {
                         this.glitchSound.stop();

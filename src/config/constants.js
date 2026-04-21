@@ -4,6 +4,15 @@ export const TEXT_STROKE = { stroke: "#000000", strokeThickness: 3 };
 
 export const GLITCH_DURATION = 3000;
 
+export const SLOT_SPACING = 160;
+export const SLOT_Y = 260;
+export const PART_BAR_SPACING = 150;
+export const TIME_DECREASE_STEP = 0.5;
+export const MIN_ROUND_TIME = 3;
+export const GLITCH_MIN_DELAY = 5000;
+export const GLITCH_MAX_DELAY = 8000;
+export const GLITCH_TELEGRAPH = 1000;
+
 export const PART_MAP = {
     A: { variants: ["head_1", "head_1a", "head_2", "head_3", "head_4", "head_4a", "head_5", "head_6", "head_7"], dx: 5, dy: 12, size: [298, 278] },
     S: { variants: ["track_1", "track_2"], dx: -1, dy: 44, size: [182, 97] },
