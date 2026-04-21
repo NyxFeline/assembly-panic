@@ -1,12 +1,24 @@
 import EventBus from "./EventBus.js";
 
+const PIXEL_FONT = '"Press Start 2P", Courier, monospace';
+const TEXT_STROKE = { stroke: "#000000", strokeThickness: 3 };
+
+const PART_MAP = {
+    A: { icon: "head", dx: 5, dy: 12, size: [298, 278] },  // HEAD    
+    S: { icon: "track", dx: -1, dy: 44, size: [182, 97] },  // TRACK    
+    D: { icon: "sideattach", dx: 9, dy: -2, size: [188, 208] },  // SIDE    
+    F: { icon: "backattach", dx: 10, dy: -9, size: [260, 280] },  // BACK
+};
+
 export default class InputSystem {
     constructor(scene) {
         this.scene = scene;
 
         this.targetOrder = ["A", "S", "D"];
         this.currentInput = [];
-        this.iconMap = { A: "gear", S: "chip", D: "battery", F: "bolt" };
+        this.slots = [];
+        this.parts = {};
+        this.attachedParts = {};
 
         this.keys = {
             A: this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A),
@@ -15,103 +27,249 @@ export default class InputSystem {
             F: this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.F),
         };
 
-        this.orderIcons = [];
-        this.orderIconKeys = [];
+    }
+
+    initSlots() {
+        const cx = this.scene.W / 2;
+        const spacing = 160;
+        const y = 260;
+        const startX = cx - (this.targetOrder.length - 1) * spacing / 2;
+
+        this.slots = this.targetOrder.map((expectedKey, i) => {
+            const x = startX + i * spacing;
+            const part = PART_MAP[expectedKey];
+
+            const sprite = this.scene.add
+                .image(x, y, "slot_frame")
+                .setDisplaySize(110, 110)
+                .setDepth(5)
+                .setTint(0x556677);
+
+            const icon = this.scene.add
+                .image(x, y, part.icon)
+                .setDisplaySize(90, 90)
+                .setAlpha(0.3)
+                .setDepth(6);
+
+            const label = this.scene.add
+                .text(x, y + 66, expectedKey, {
+                    fontSize: "11px", color: "#38bdf8",
+                    fontFamily: PIXEL_FONT, ...TEXT_STROKE,
+                })
+                .setOrigin(0.5).setDepth(6);
+
+            return { expectedKey, filled: false, x, y, sprite, icon, label };
+        });
+    }
+
+    initParts() {
+        const partKeys = ["A", "S", "D", "F"];
+        const spacing = 150;
+        const startX = this.scene.W / 2 - (partKeys.length - 1) * spacing / 2;
+        const y = this.scene.H - 55;
+
+        this.scene.add
+            .rectangle(this.scene.W / 2, y, this.scene.W, 90, 0x0d1117)
+            .setOrigin(0.5).setDepth(5);
+
+        partKeys.forEach((key) => {
+            const i = partKeys.indexOf(key);
+            const x = startX + i * spacing;
+            const part = PART_MAP[key];
+
+            const bg = this.scene.add
+                .rectangle(x, y - 10, 90, 90, 0x1a2a3a)
+                .setStrokeStyle(1, 0x334455)
+                .setDepth(5);
+
+            const sprite = this.scene.add
+                .image(x, y - 10, part.icon)
+                .setDisplaySize(80, 80)
+                .setDepth(6);
+
+            this.scene.add
+                .text(x, y + 26, `[${key}]`, {
+                    fontSize: "10px", color: "#4488aa",
+                    fontFamily: PIXEL_FONT, ...TEXT_STROKE,
+                })
+                .setOrigin(0.5).setDepth(6);
+
+            this.parts[key] = { key, sprite, bg, x, y: y - 10 };
+        });
+    }
+
+    snapPartToSlot(key, slot) {
+        const part = this.parts[key];
+        if (!part) return;
+
+        const clone = this.scene.add
+            .image(part.x, part.y, PART_MAP[key].icon)
+            .setDisplaySize(90, 90)
+            .setDepth(20);
+
+        this.scene.tweens.add({
+            targets: clone,
+            x: slot.x, y: slot.y,
+            duration: 160,
+            ease: "Cubic.easeOut",
+            onComplete: () => {
+                clone.destroy();
+                slot.sprite.setTint(0x22c55e);
+                slot.icon.setAlpha(1).setTint(0x22c55e);
+                part.sprite.setAlpha(0.2);
+                part.bg.setFillStyle(0x0d1117);
+                this._attachToRobot(key, slot);
+                this.scene.cameras.main.flash(60, 100, 255, 100, false);
+            },
+        });
+    }
+
+    _attachToRobot(key, slot) {
+        const anchor = PART_MAP[key];
+        const rb = this.scene.robotBase;
+        const tx = rb.x + anchor.dx;
+        const ty = rb.y + anchor.dy;
+
+        if (this.attachedParts[key]) this.attachedParts[key].destroy();
+
+        const partSprite = this.scene.add
+            .image(slot.x, slot.y, anchor.icon)
+            .setDisplaySize(...anchor.size)
+            .setDepth(3)
+            .setAlpha(0);
+
+        this.scene.tweens.add({
+            targets: partSprite,
+            x: tx, y: ty, alpha: 1,
+            duration: 220, ease: "Back.easeOut", delay: 60,
+        });
+
+        this.attachedParts[key] = partSprite;
+
+        const attachedCount = Object.keys(this.attachedParts).length;
+        const totalParts = this.targetOrder.length;
+        const targetAlpha = 0.2 + (attachedCount / totalParts) * 0.75;
+
+        this.scene.tweens.add({
+            targets: rb, alpha: targetAlpha, duration: 300,
+        });
+    }
+
+    onWrongInput(key) {
+        const part = this.parts[key];
+        if (part) {
+            const ox = part.x;
+            this.scene.tweens.add({
+                targets: part.sprite,
+                x: ox + 8, duration: 50, yoyo: true, repeat: 3,
+                onComplete: () => { part.sprite.x = ox; },
+            });
+        }
+
+        this.scene.cameras.main.shake(140, 0.013);
+        this.scene.flashRect.setFillStyle(0xff2200, 0.3);
+        this.scene.time.delayedCall(80, () => this.scene.flashRect.setAlpha(0));
+
+        if (this.scene.cache.audio.exists("error")) {
+            this.scene.sound.play("error", { volume: 0.6 });
+        }
+
+        this.scene.combo = 0;
+        EventBus.emit("combo:changed", 0);
+        this.currentInput = [];
+        this.resetSlotsVisual();
+    }
+
+    resetSlotsVisual() {
+        this.slots.forEach(slot => {
+            slot.filled = false;
+            slot.sprite.setTint(0x556677);
+            slot.icon.setAlpha(0.3).clearTint();
+        });
+        Object.values(this.parts).forEach(p => {
+            p.sprite.setAlpha(1);
+            p.bg.setFillStyle(0x1a2a3a);
+        });
     }
 
     handleInput(key) {
         if (this.scene.isGameOver) return;
-        if (!this.scene.inputText) return;
 
-        const expected = this.targetOrder[this.currentInput.length];
-        if (!expected) return;
+        const slot = this.slots[this.currentInput.length];
+        if (!slot) return;
 
-        if (key === expected) {
+        if (key === slot.expectedKey) {
             this.currentInput.push(key);
-            this.scene.inputText.setText(this.currentInput.join("  "));
-            this.updateOrderUI();
-
-            this.scene.flashRect.setFillStyle(0x00ff88, 0.25);
-            this.scene.time.delayedCall(60, () => this.scene.flashRect.setAlpha(0));
+            slot.filled = true;
+            this.snapPartToSlot(key, slot);
 
             if (this.scene.cache.audio.exists("click")) {
                 this.scene.sound.play("click", { volume: 0.6 });
             }
 
-            if (this.currentInput.length === this.targetOrder.length) {
-                this.scene.cameras.main.flash(100, 255, 255, 255, false);
-                this.scene.combo += 1;
-                this.scene.score += 10 * this.scene.combo;
-                EventBus.emit("score:changed", this.scene.score);
-                EventBus.emit("combo:changed", this.scene.combo);
-
-                // if (this.scene.combo >= 3) {
-                //     this.scene.tweens.add({
-                //         targets: this.scene.comboText,
-                //         scaleX: 1.6, scaleY: 1.6,
-                //         duration: 120, yoyo: true,
-                //     });
-                // }
-
-                this.resetOrder();
+            if (this.currentInput.length === this.slots.length) {
+                this.onCompleteSequence();
             }
         } else {
-            this.scene.cameras.main.shake(150, 0.015);
-            this.scene.flashRect.setFillStyle(0xff2200, 0.3);
-            this.scene.time.delayedCall(80, () => this.scene.flashRect.setAlpha(0));
-            this.scene.cameras.main.shake(120, 0.012);
-
-            if (this.scene.cache.audio.exists("error")) {
-                this.scene.sound.play("error", { volume: 0.6 });
-            }
-
-            this.scene.combo = 0;
-            EventBus.emit("combo:changed", 0);
-            this.currentInput = [];
-            this.scene.inputText.setText("");
-            this.updateOrderUI();
+            this.onWrongInput(key);
         }
     }
 
+    onCompleteSequence() {
+        this.slots.forEach(slot => {
+            this.scene.tweens.add({
+                targets: [slot.sprite, slot.icon, slot.label],
+                alpha: 0, duration: 120,
+            });
+        });
+
+        this.scene.cameras.main.flash(200, 255, 255, 255, false);
+        this.scene.tweens.add({
+            targets: this.scene.robotBase,
+            alpha: 1, duration: 150, yoyo: true, hold: 120,
+        });
+
+        this.scene.combo += 1;
+        this.scene.score += 10 * this.scene.combo;
+        EventBus.emit("score:changed", this.scene.score);
+        EventBus.emit("combo:changed", this.scene.combo);
+
+        this.scene.time.delayedCall(450, () => this.resetOrder());
+    }
+
     resetOrder() {
+        this.slots.forEach(s => {
+            s.sprite.destroy();
+            s.icon.destroy();
+            s.label.destroy();
+        });
+        this.slots = [];
+
+        Object.values(this.attachedParts).forEach(s => {
+            this.scene.tweens.add({
+                targets: s, alpha: 0, duration: 150,
+                onComplete: () => s.destroy(),
+            });
+        });
+        this.attachedParts = {};
+
+        this.scene.tweens.add({
+            targets: this.scene.robotBase, alpha: 0.2, duration: 200,
+        });
+
+        Object.values(this.parts).forEach(p => {
+            p.sprite.setAlpha(1);
+            p.bg.setFillStyle(0x1a2a3a);
+        });
+
         this.targetOrder = Phaser.Utils.Array.Shuffle(["A", "S", "D", "F"]).slice(0, 3);
         this.currentInput = [];
-        this.renderOrderIcons();
-        this.scene.inputText.setText("");
+
+        this.initSlots();
+
         this.scene.timeLeft = this.scene.maxTime;
         this.scene.maxTime = Math.max(3, this.scene.maxTime - 0.5);
         EventBus.emit("timer:changed", this.scene.timeLeft, "#00ff88");
-    }
-
-    renderOrderIcons() {
-        this.orderIcons.forEach(o => o.destroy());
-        this.orderIconKeys.forEach(o => o.destroy());
-        this.orderIcons = [];
-        this.orderIconKeys = [];
-
-        const cx = this.scene.W / 2;
-        const spacing = 120;
-        const startX = cx - (this.targetOrder.length - 1) * spacing / 2;
-        const y = 270;
-
-        this.targetOrder.forEach((key, i) => {
-            const icon = this.scene.add
-                .image(startX + i * spacing, y, this.iconMap[key])
-                .setDisplaySize(80, 80);
-            const label = this.scene.add
-                .text(startX + i * spacing, y + 52, key, {
-                    fontSize: "16px", color: "#888888",
-                })
-                .setOrigin(0.5);
-            this.orderIcons.push(icon);
-            this.orderIconKeys.push(label);
-        });
-    }
-
-    updateOrderUI() {
-        this.orderIcons.forEach((icon, i) => {
-            icon.setTint(i < this.currentInput.length ? 0x00ff88 : 0xffffff);
-        });
     }
 
     update() {

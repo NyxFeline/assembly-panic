@@ -8,15 +8,21 @@ export default class UIScene extends Phaser.Scene {
 
     create() {
         this.timerText = this.add.text(20, 16, "SYS TIMER: 10", {
-            fontSize: "26px", color: "#00ff88",
+            fontSize: "26px",
+            color: "#00ff88",
+            fontFamily: "Courier, monospace",
         }).setDepth(10);
 
         this.scoreText = this.add.text(this.scale.width - 20, 16, "OUTPUT SCORE: 0", {
-            fontSize: "26px", color: "#ffffff",
+            fontSize: "26px",
+            color: "#ffffff",
+            fontFamily: "Courier, monospace",
         }).setOrigin(1, 0).setDepth(10);
 
         this.comboText = this.add.text(20, 50, "CHAIN STATUS: x0", {
-            fontSize: "18px", color: "#ffaa00",
+            fontSize: "18px",
+            color: "#ffaa00",
+            fontFamily: "Courier, monospace",
         }).setDepth(10);
 
         EventBus.on("timer:changed", (time, color) => {
@@ -77,7 +83,8 @@ export default class UIScene extends Phaser.Scene {
                     if (charIndex >= bsodLines.length) {
                         typeEvent.remove();
 
-                        const rebootText = this.add.text(80, bsodText.y + bsodText.height + 16,
+                        const rebootText = this.add.text(
+                            80, bsodText.y + bsodText.height + 16,
                             "Press  [R]  TO REBOOT SYSTEM", {
                             fontSize: "18px",
                             color: "#ffffff",
@@ -89,7 +96,9 @@ export default class UIScene extends Phaser.Scene {
                             duration: 500, yoyo: true, repeat: -1,
                         });
 
-                        const rKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R);
+                        const rKey = this.input.keyboard.addKey(
+                            Phaser.Input.Keyboard.KeyCodes.R
+                        );
                         rKey.once("down", () => {
                             this.scene.stop("UIScene");
                             this.scene.start("GameScene");
@@ -99,9 +108,13 @@ export default class UIScene extends Phaser.Scene {
             });
         });
 
-        this.glitchWarning = this.add.text(this.scale.width / 2, this.scale.height / 2 - 30,
+        this.glitchWarning = this.add.text(
+            this.scale.width / 2, this.scale.height / 2 - 30,
             "⚠ INPUT MATRIX INVERTED ⚠", {
-            fontSize: "22px", color: "#ff4444", align: "center",
+            fontSize: "22px",
+            color: "#ff4444",
+            fontFamily: "Courier, monospace",
+            align: "center",
         }).setOrigin(0.5).setDepth(20).setVisible(false);
 
         this.glitchWarningTween = null;

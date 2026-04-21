@@ -7,6 +7,7 @@ const config = {
   width: 800,
   height: 600,
   backgroundColor: "#1a1a2e",
+  pixelArt: true,
   scene: [GameScene, UIScene],
 };
 

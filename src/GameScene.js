@@ -3,16 +3,50 @@ import EventBus from "./systems/EventBus.js";
 import GlitchManager from "./systems/GlitchManager.js";
 import InputSystem from "./systems/InputSystem.js";
 
+const PIXEL_FONT = '"Press Start 2P", Courier, monospace';
+const TEXT_STROKE = { stroke: "#000000", strokeThickness: 3 };
+
 export default class GameScene extends Phaser.Scene {
     constructor() {
         super({ key: "GameScene" });
     }
 
     preload() {
-        this.load.image("gear", "/assets/img/gear.png");
-        this.load.image("chip", "/assets/img/chip.png");
-        this.load.image("battery", "/assets/img/battery.png");
-        this.load.image("bolt", "/assets/img/bolt.png");
+        this.load.image("head_1", "/assets/img/robot_head_1.png");
+        this.load.image("head_1a", "/assets/img/robot_head_1a.png");
+        this.load.image("head_2", "/assets/img/robot_head_2.png");
+        this.load.image("head_3", "/assets/img/robot_head_3.png");
+        this.load.image("head_4", "/assets/img/robot_head_4.png");
+        this.load.image("head_4a", "/assets/img/robot_head_4a.png");
+        this.load.image("head_5", "/assets/img/robot_head_5.png");
+        this.load.image("head_6", "/assets/img/robot_head_6.png");
+        this.load.image("head_7", "/assets/img/robot_head_7.png");
+
+        this.load.image("track_1", "/assets/img/robot_track_1.png");
+        this.load.image("track_2", "/assets/img/robot_track_2.png");
+
+        this.load.image("side_1", "/assets/img/robot_sideattach_1.png");
+        this.load.image("side_2", "/assets/img/robot_sideattach_2.png");
+        this.load.image("side_2a", "/assets/img/robot_sideattach_2a.png");
+        this.load.image("side_3", "/assets/img/robot_sideattach_3.png");
+        this.load.image("side_4", "/assets/img/robot_sideattach_4.png");
+
+        this.load.image("back_1", "/assets/img/robot_backattach_1.png");
+        this.load.image("back_2", "/assets/img/robot_backattach_2.png");
+        this.load.image("back_3", "/assets/img/robot_backattach_3.png");
+        this.load.image("back_4", "/assets/img/robot_backattach_4.png");
+        this.load.image("back_5", "/assets/img/robot_backattach_5.png");
+        this.load.image("back_6", "/assets/img/robot_backattach_6.png");
+
+        this.load.image("base_1", "/assets/img/robot_base_1.png");
+        this.load.image("base_1a", "/assets/img/robot_base_1a.png");
+        this.load.image("base_2", "/assets/img/robot_base_2.png");
+        this.load.image("base_2a", "/assets/img/robot_base_2a.png");
+        this.load.image("base_3", "/assets/img/robot_base_3.png");
+        this.load.image("base_4", "/assets/img/robot_base_4.png");
+        this.load.image("base_5", "/assets/img/robot_base_5.png");
+
+        this.load.image("slot_frame", "/assets/img/slot_frame.png");
 
         this.load.audio("glitch", "/assets/sounds/glitch.ogg");
         this.load.audio("bgm", "/assets/sounds/bgm.ogg");
@@ -34,51 +68,73 @@ export default class GameScene extends Phaser.Scene {
             .rectangle(this.W / 2, this.H / 2, this.W, this.H, 0xffffff, 0)
             .setDepth(99);
 
-        // Title
-        this.add.text(this.W / 2, 100, "ASSEMBLY PANIC", {
-            fontSize: "44px", color: "#00ff88", fontStyle: "bold",
+        this.add.image(this.W / 2, this.H / 2, "robot_base")
+            .setDisplaySize(220, 220)
+            .setDepth(1)
+            .setAlpha(0.6);
+
+        this.add.text(this.W / 2, 80, "ASSEMBLY PANIC", {
+            fontSize: "28px",
+            color: "#00ff88",
+            fontStyle: "bold",
+            fontFamily: PIXEL_FONT,
+            ...TEXT_STROKE,
         }).setOrigin(0.5);
 
-        // Key guide
-        const keys = [
-            { key: "A", icon: "gear", label: "Gear" },
-            { key: "S", icon: "chip", label: "Chip" },
-            { key: "D", icon: "battery", label: "Battery" },
-            { key: "F", icon: "bolt", label: "Bolt" },
+        const guideKeys = [
+            { key: "A", icon: "head", label: "HEAD" },
+            { key: "S", icon: "track", label: "TRACK" },
+            { key: "D", icon: "sideattach", label: "SIDE" },
+            { key: "F", icon: "backattach", label: "BACK" },
         ];
         const spacing = 130;
         const startX = this.W / 2 - spacing * 1.5;
-        const guideY = 260;
+        const guideY = 240;
 
-        keys.forEach(({ key, icon, label }, i) => {
+        guideKeys.forEach(({ key, icon, label }, i) => {
             const x = startX + i * spacing;
-            this.add.rectangle(x, guideY - 30, 52, 52, 0x223344).setOrigin(0.5);
+            this.add.rectangle(x, guideY - 30, 54, 54, 0x1a2a3a)
+                .setStrokeStyle(1, 0x334455);
             this.add.text(x, guideY - 30, `[${key}]`, {
-                fontSize: "20px", color: "#ffdd00",
+                fontSize: "13px",
+                color: "#ffdd00",
+                fontFamily: PIXEL_FONT,
+                ...TEXT_STROKE,
             }).setOrigin(0.5);
-            this.add.image(x, guideY + 30, icon).setDisplaySize(48, 48);
-            this.add.text(x, guideY + 62, label, {
-                fontSize: "13px", color: "#aaaaaa",
+            this.add.image(x, guideY + 32, icon).setDisplaySize(52, 52);
+            this.add.text(x, guideY + 66, label, {
+                fontSize: "9px",
+                color: "#aaaaaa",
+                fontFamily: PIXEL_FONT,
+                ...TEXT_STROKE,
             }).setOrigin(0.5);
         });
 
-        this.add.text(this.W / 2, 370,
-            "Nhìn icon → bấm phím đúng thứ tự\nCảnh báo đỏ = controls bị đảo!", {
-            fontSize: "16px", color: "#888888",
-            align: "center", lineSpacing: 8,
-        }).setOrigin(0.5);
-
-        this.add.text(this.W / 2, 420,
-            "Khi đảo:  A ↔ D     S ↔ F", {
-            fontSize: "15px", color: "#ff4444",
-            fontFamily: "Courier, monospace",
+        this.add.text(this.W / 2, 360,
+            "Nhìn icon → bấm phím đúng thứ tự", {
+            fontSize: "11px",
+            color: "#888888",
+            fontFamily: PIXEL_FONT,
             align: "center",
+            lineSpacing: 8,
+            ...TEXT_STROKE,
         }).setOrigin(0.5);
 
-        // Click to start
-        const offlineText = this.add.text(this.W / 2, 470, "SYSTEM OFFLINE - CLICK TO INITIALIZE", {
-            fontSize: "20px", color: "#00ff88",
-            fontFamily: "Courier, monospace",
+        this.add.text(this.W / 2, 400,
+            "Cảnh báo đỏ = controls bị đảo!", {
+            fontSize: "11px",
+            color: "#ff4444",
+            fontFamily: PIXEL_FONT,
+            align: "center",
+            ...TEXT_STROKE,
+        }).setOrigin(0.5);
+
+        const offlineText = this.add.text(this.W / 2, 460,
+            "[ CLICK TO INITIALIZE ]", {
+            fontSize: "15px",
+            color: "#00ff88",
+            fontFamily: PIXEL_FONT,
+            ...TEXT_STROKE,
         }).setOrigin(0.5).setDepth(10);
 
         this.tweens.add({
@@ -93,6 +149,12 @@ export default class GameScene extends Phaser.Scene {
                 .rectangle(this.W / 2, this.H / 2, this.W, this.H, 0xffffff, 0)
                 .setDepth(99);
 
+            this.robotBase = this.add
+                .image(this.W / 2, this.H / 2 - 20, "robot_base")
+                .setDisplaySize(220, 220)
+                .setDepth(2)
+                .setAlpha(0.2);
+
             if (this.cache.audio.exists("bgm")) {
                 this.sound.play("bgm", { loop: true, volume: 0.5 });
             }
@@ -105,48 +167,11 @@ export default class GameScene extends Phaser.Scene {
         });
     }
 
-
     startGame() {
-        const cx = this.W / 2;
-
-        this.scene.launch("UIScene");
-
-        this.add.text(cx, 160, "CẦN:", {
-            fontSize: "22px", color: "#ffdd00",
-        }).setOrigin(0.5);
-
-        this.inputSystem.renderOrderIcons();
-
-        this.inputText = this.add.text(cx, 380, "", {
-            fontSize: "28px", color: "#00ccff",
-        }).setOrigin(0.5).setDepth(10);
-
-        this.drawKeyBar();
-
+        this.inputSystem.initSlots();
+        this.inputSystem.initParts();
         this.startTimer();
         this.glitchManager.startGlitchTimer();
-    }
-
-    drawKeyBar() {
-        const keys = [
-            { key: "A", icon: "gear" },
-            { key: "S", icon: "chip" },
-            { key: "D", icon: "battery" },
-            { key: "F", icon: "bolt" },
-        ];
-        const spacing = 100;
-        const startX = this.W / 2 - spacing * 1.5;
-        const y = this.H - 48;
-
-        this.add.rectangle(this.W / 2, y, this.W, 72, 0x111122).setOrigin(0.5);
-
-        keys.forEach(({ key, icon }, i) => {
-            const x = startX + i * spacing;
-            this.add.image(x - 18, y, icon).setDisplaySize(30, 30).setAlpha(0.7);
-            this.add.text(x + 14, y, `[${key}]`, {
-                fontSize: "16px", color: "#666688",
-            }).setOrigin(0, 0.5);
-        });
     }
 
     startTimer() {
@@ -175,11 +200,7 @@ export default class GameScene extends Phaser.Scene {
         this.glitchManager.stop();
         if (this.cache.audio.exists("bgm")) this.sound.stopByKey("bgm");
         this.time.removeAllEvents();
-
-        EventBus.emit("game:over", {
-            score: this.score,
-            combo: this.combo,
-        });
+        EventBus.emit("game:over", { score: this.score, combo: this.combo });
     }
 
     update() {
