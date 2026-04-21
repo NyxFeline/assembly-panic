@@ -109,12 +109,14 @@ export default class UIScene extends Phaser.Scene {
         });
 
         this.glitchWarning = this.add.text(
-            this.scale.width / 2, this.scale.height / 2 - 30,
-            "⚠ INPUT MATRIX INVERTED ⚠", {
+            this.scale.width / 2, this.scale.height / 2 - 40,
+            "⚠  INPUT MATRIX INVERTED  ⚠\n[A]↔[D]     [S]↔[F]", {
             fontSize: "22px",
             color: "#ff4444",
-            fontFamily: "Courier, monospace",
+            fontFamily: "\"Jersey 10\", Courier, monospace",
             align: "center",
+            lineSpacing: 6,
+            resolution: 2,
         }).setOrigin(0.5).setDepth(20).setVisible(false);
 
         this.glitchWarningTween = null;

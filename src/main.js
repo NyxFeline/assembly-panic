@@ -11,4 +11,6 @@ const config = {
   scene: [GameScene, UIScene],
 };
 
-new Phaser.Game(config);
+document.fonts.ready.then(() => {
+  new Phaser.Game(config);
+});

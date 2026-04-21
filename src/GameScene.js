@@ -3,7 +3,7 @@ import EventBus from "./systems/EventBus.js";
 import GlitchManager from "./systems/GlitchManager.js";
 import InputSystem from "./systems/InputSystem.js";
 
-const PIXEL_FONT = '"Press Start 2P", Courier, monospace';
+const PIXEL_FONT = '"Jersey 10", Courier, monospace';
 const TEXT_STROKE = { stroke: "#000000", strokeThickness: 3 };
 
 export default class GameScene extends Phaser.Scene {
@@ -68,79 +68,127 @@ export default class GameScene extends Phaser.Scene {
             .rectangle(this.W / 2, this.H / 2, this.W, this.H, 0xffffff, 0)
             .setDepth(99);
 
-        this.add.image(this.W / 2, this.H / 2, "robot_base")
-            .setDisplaySize(220, 220)
-            .setDepth(1)
-            .setAlpha(0.6);
+        this.add.image(this.W / 2, this.H / 2, "base_1")
+            .setDisplaySize(340, 340)
+            .setDepth(1).setAlpha(0.15);
 
-        this.add.text(this.W / 2, 80, "ASSEMBLY PANIC", {
-            fontSize: "28px",
+        this.add.rectangle(this.W / 2, this.H / 2, this.W, this.H, 0x000000, 0.88)
+            .setDepth(2);
+
+        for (let scanY = 0; scanY < this.H; scanY += 4) {
+            this.add.rectangle(this.W / 2, scanY, this.W, 1, 0x000000, 0.18)
+                .setDepth(3);
+        }
+
+        this.add.text(this.W / 2, 50, "ASSEMBLY PANIC", {
+            fontSize: "50px",
             color: "#00ff88",
-            fontStyle: "bold",
             fontFamily: PIXEL_FONT,
+            resolution: 2,
             ...TEXT_STROKE,
-        }).setOrigin(0.5);
+        }).setOrigin(0.5).setDepth(4);
 
-        const guideKeys = [
-            { key: "A", icon: "head", label: "HEAD" },
-            { key: "S", icon: "track", label: "TRACK" },
-            { key: "D", icon: "sideattach", label: "SIDE" },
-            { key: "F", icon: "backattach", label: "BACK" },
+        this.add.text(this.W / 2, 92, "GLITCHED  MACHINE  v1.0", {
+            fontSize: "18px",
+            color: "#336655",
+            fontFamily: PIXEL_FONT,
+            resolution: 2,
+        }).setOrigin(0.5).setDepth(4);
+
+        this.add.rectangle(this.W / 2, 112, 640, 1, 0x00ff88, 0.25).setDepth(4);
+
+        const bootLines = [
+            { text: "SYSTEM BOOT SEQUENCE...", color: "#557766" },
+            { text: "", color: "#aaaaaa" },
+            { text: "[A]  ──  ATTACH HEAD UNIT", color: "#00ff88" },
+            { text: "[S]  ──  MOUNT TRACK SYSTEM", color: "#00ff88" },
+            { text: "[D]  ──  EQUIP SIDE WEAPON", color: "#00ff88" },
+            { text: "[F]  ──  INSTALL BACKPACK", color: "#00ff88" },
+            { text: "", color: "#aaaaaa" },
+            { text: "OBJECTIVE: MATCH KEY SEQUENCE BEFORE TIMER EXPIRES.", color: "#557766" },
         ];
-        const spacing = 130;
-        const startX = this.W / 2 - spacing * 1.5;
-        const guideY = 240;
 
-        guideKeys.forEach(({ key, icon, label }, i) => {
-            const x = startX + i * spacing;
-            this.add.rectangle(x, guideY - 30, 54, 54, 0x1a2a3a)
-                .setStrokeStyle(1, 0x334455);
-            this.add.text(x, guideY - 30, `[${key}]`, {
-                fontSize: "13px",
-                color: "#ffdd00",
+        const termX = this.W / 2 - 230;
+        const termStartY = 128;
+        const lineH = 36;
+
+        bootLines.forEach(({ text, color }, i) => {
+            this.add.text(termX, termStartY + i * lineH, text, {
+                fontSize: "20px",
+                color,
                 fontFamily: PIXEL_FONT,
-                ...TEXT_STROKE,
-            }).setOrigin(0.5);
-            this.add.image(x, guideY + 32, icon).setDisplaySize(52, 52);
-            this.add.text(x, guideY + 66, label, {
-                fontSize: "9px",
-                color: "#aaaaaa",
-                fontFamily: PIXEL_FONT,
-                ...TEXT_STROKE,
-            }).setOrigin(0.5);
+                resolution: 2,
+            }).setDepth(4);
         });
 
-        this.add.text(this.W / 2, 360,
-            "Nhìn icon → bấm phím đúng thứ tự", {
-            fontSize: "11px",
-            color: "#888888",
-            fontFamily: PIXEL_FONT,
-            align: "center",
-            lineSpacing: 8,
-            ...TEXT_STROKE,
-        }).setOrigin(0.5);
+        this.add.rectangle(this.W / 2, 412, 640, 1, 0xff2200, 0.2).setDepth(4);
 
-        this.add.text(this.W / 2, 400,
-            "Cảnh báo đỏ = controls bị đảo!", {
-            fontSize: "11px",
+        this.add.rectangle(this.W / 2, 434, 645, 44, 0x1a0000, 1)
+            .setDepth(4)
+            .setStrokeStyle(1, 0xff2200, 0.5);
+
+        this.add.text(this.W / 2, 420, "⚠  GLITCH MODE: CONTROLS INVERT", {
+            fontSize: "20px",
             color: "#ff4444",
             fontFamily: PIXEL_FONT,
-            align: "center",
-            ...TEXT_STROKE,
-        }).setOrigin(0.5);
+            resolution: 2,
+        }).setOrigin(0.5).setDepth(5);
 
-        const offlineText = this.add.text(this.W / 2, 460,
-            "[ CLICK TO INITIALIZE ]", {
-            fontSize: "15px",
-            color: "#00ff88",
+        this.add.text(this.W / 2, 442,
+            "[A] = [D]    [D] = [A]    [S] = [F]    [F] = [S]", {
+            fontSize: "20px",
+            color: "#ff8800",
             fontFamily: PIXEL_FONT,
-            ...TEXT_STROKE,
-        }).setOrigin(0.5).setDepth(10);
+            resolution: 2,
+        }).setOrigin(0.5).setDepth(5);
+
+        const warnText = this.add.text(this.W / 2, 470,
+            "⚠  WARNING: SYSTEM GLITCH DETECTED. INPUTS MAY INVERT.  ⚠", {
+            fontSize: "15px",
+            color: "#ff4444",
+            fontFamily: PIXEL_FONT,
+            resolution: 2,
+            align: "center",
+        }).setOrigin(0.5).setDepth(5);
 
         this.tweens.add({
-            targets: offlineText, alpha: 0,
-            duration: 600, yoyo: true, repeat: -1,
+            targets: warnText,
+            alpha: 0.15,
+            duration: 500,
+            yoyo: true,
+            repeat: -1,
+            ease: "Sine.easeInOut",
         });
+
+        const btnY = 510;
+        const btnBg = this.add.rectangle(this.W / 2, btnY, 380, 46, 0x001a0d, 1)
+            .setDepth(4)
+            .setStrokeStyle(2, 0x00ff88, 1);
+
+        const btnText = this.add.text(this.W / 2, btnY, "[ CLICK TO INITIALIZE ]", {
+            fontSize: "24px",
+            color: "#00ff88",
+            fontFamily: PIXEL_FONT,
+            resolution: 2,
+            ...TEXT_STROKE,
+        }).setOrigin(0.5).setDepth(5);
+
+        this.tweens.add({
+            targets: [btnBg, btnText],
+            alpha: 0.25,
+            duration: 600,
+            yoyo: true,
+            repeat: -1,
+            ease: "Sine.easeInOut",
+        });
+
+        this.add.text(this.W / 2, 560,
+            "SYS BUILD 0.4.1  //  ANTHROPIC ROBOTICS CORP  //  NyxFeline", {
+            fontSize: "10px",
+            color: "#2a4a38",
+            fontFamily: PIXEL_FONT,
+            resolution: 2,
+        }).setOrigin(0.5).setDepth(4);
 
         this.input.once("pointerdown", () => {
             this.children.removeAll(true);
@@ -149,8 +197,11 @@ export default class GameScene extends Phaser.Scene {
                 .rectangle(this.W / 2, this.H / 2, this.W, this.H, 0xffffff, 0)
                 .setDepth(99);
 
+            const baseVariants = ["base_1", "base_1a", "base_2", "base_2a", "base_3", "base_4", "base_5"];
+            const chosenBase = Phaser.Math.RND.pick(baseVariants);
+
             this.robotBase = this.add
-                .image(this.W / 2, this.H / 2 - 20, "robot_base")
+                .image(this.W / 2, this.H / 2 - 20, chosenBase)
                 .setDisplaySize(220, 220)
                 .setDepth(2)
                 .setAlpha(0.2);

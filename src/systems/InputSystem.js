@@ -1,13 +1,14 @@
+import * as Phaser from "phaser";
 import EventBus from "./EventBus.js";
 
-const PIXEL_FONT = '"Press Start 2P", Courier, monospace';
+const PIXEL_FONT = '"Jersey 10", Courier, monospace';
 const TEXT_STROKE = { stroke: "#000000", strokeThickness: 3 };
 
 const PART_MAP = {
-    A: { icon: "head", dx: 5, dy: 12, size: [298, 278] },  // HEAD    
-    S: { icon: "track", dx: -1, dy: 44, size: [182, 97] },  // TRACK    
-    D: { icon: "sideattach", dx: 9, dy: -2, size: [188, 208] },  // SIDE    
-    F: { icon: "backattach", dx: 10, dy: -9, size: [260, 280] },  // BACK
+    A: { variants: ["head_1", "head_1a", "head_2", "head_3", "head_4", "head_4a", "head_5", "head_6", "head_7"], dx: 5, dy: 12, size: [298, 278] },
+    S: { variants: ["track_1", "track_2"], dx: -1, dy: 44, size: [182, 97] },
+    D: { variants: ["side_1", "side_2", "side_2a", "side_3", "side_4"], dx: 9, dy: -2, size: [188, 208] },
+    F: { variants: ["back_1", "back_2", "back_3", "back_4", "back_5", "back_6"], dx: 10, dy: -9, size: [260, 280] },
 };
 
 export default class InputSystem {
@@ -19,6 +20,7 @@ export default class InputSystem {
         this.slots = [];
         this.parts = {};
         this.attachedParts = {};
+        this.currentVariants = {};
 
         this.keys = {
             A: this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A),
@@ -27,6 +29,17 @@ export default class InputSystem {
             F: this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.F),
         };
 
+        this._rollVariants();
+    }
+
+    _rollVariants() {
+        ["A", "S", "D", "F"].forEach(key => {
+            this.currentVariants[key] = Phaser.Math.RND.pick(PART_MAP[key].variants);
+        });
+    }
+
+    _tex(key) {
+        return this.currentVariants[key];
     }
 
     initSlots() {
@@ -37,7 +50,6 @@ export default class InputSystem {
 
         this.slots = this.targetOrder.map((expectedKey, i) => {
             const x = startX + i * spacing;
-            const part = PART_MAP[expectedKey];
 
             const sprite = this.scene.add
                 .image(x, y, "slot_frame")
@@ -46,14 +58,14 @@ export default class InputSystem {
                 .setTint(0x556677);
 
             const icon = this.scene.add
-                .image(x, y, part.icon)
+                .image(x, y, this._tex(expectedKey))
                 .setDisplaySize(90, 90)
                 .setAlpha(0.3)
                 .setDepth(6);
 
             const label = this.scene.add
                 .text(x, y + 66, expectedKey, {
-                    fontSize: "11px", color: "#38bdf8",
+                    fontSize: "15px", color: "#38bdf8",
                     fontFamily: PIXEL_FONT, ...TEXT_STROKE,
                 })
                 .setOrigin(0.5).setDepth(6);
@@ -75,7 +87,6 @@ export default class InputSystem {
         partKeys.forEach((key) => {
             const i = partKeys.indexOf(key);
             const x = startX + i * spacing;
-            const part = PART_MAP[key];
 
             const bg = this.scene.add
                 .rectangle(x, y - 10, 90, 90, 0x1a2a3a)
@@ -83,7 +94,7 @@ export default class InputSystem {
                 .setDepth(5);
 
             const sprite = this.scene.add
-                .image(x, y - 10, part.icon)
+                .image(x, y - 10, this._tex(key))
                 .setDisplaySize(80, 80)
                 .setDepth(6);
 
@@ -103,7 +114,7 @@ export default class InputSystem {
         if (!part) return;
 
         const clone = this.scene.add
-            .image(part.x, part.y, PART_MAP[key].icon)
+            .image(part.x, part.y, this._tex(key))
             .setDisplaySize(90, 90)
             .setDepth(20);
 
@@ -114,10 +125,12 @@ export default class InputSystem {
             ease: "Cubic.easeOut",
             onComplete: () => {
                 clone.destroy();
+
                 slot.sprite.setTint(0x22c55e);
                 slot.icon.setAlpha(1).setTint(0x22c55e);
                 part.sprite.setAlpha(0.2);
                 part.bg.setFillStyle(0x0d1117);
+
                 this._attachToRobot(key, slot);
                 this.scene.cameras.main.flash(60, 100, 255, 100, false);
             },
@@ -133,7 +146,7 @@ export default class InputSystem {
         if (this.attachedParts[key]) this.attachedParts[key].destroy();
 
         const partSprite = this.scene.add
-            .image(slot.x, slot.y, anchor.icon)
+            .image(slot.x, slot.y, this._tex(key))
             .setDisplaySize(...anchor.size)
             .setDepth(3)
             .setAlpha(0);
@@ -219,14 +232,16 @@ export default class InputSystem {
         this.slots.forEach(slot => {
             this.scene.tweens.add({
                 targets: [slot.sprite, slot.icon, slot.label],
-                alpha: 0, duration: 120,
+                alpha: 0,
+                duration: 120,
             });
         });
 
         this.scene.cameras.main.flash(200, 255, 255, 255, false);
         this.scene.tweens.add({
             targets: this.scene.robotBase,
-            alpha: 1, duration: 150, yoyo: true, hold: 120,
+            alpha: 1,
+            duration: 150, yoyo: true, hold: 120,
         });
 
         this.scene.combo += 1;
@@ -260,6 +275,11 @@ export default class InputSystem {
         Object.values(this.parts).forEach(p => {
             p.sprite.setAlpha(1);
             p.bg.setFillStyle(0x1a2a3a);
+        });
+
+        this._rollVariants();
+        Object.values(this.parts).forEach(p => {
+            p.sprite.setTexture(this._tex(p.key));
         });
 
         this.targetOrder = Phaser.Utils.Array.Shuffle(["A", "S", "D", "F"]).slice(0, 3);
