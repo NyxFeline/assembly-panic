@@ -1,5 +1,5 @@
 import * as Phaser from "phaser";
-import EventBus from "../systems/EventBus";
+import EventBus from "../systems/EventBus.js"; // TASK 4: thêm .js extension
 import { PIXEL_FONT } from "../config/constants.js";
 
 export default class UIScene extends Phaser.Scene {
@@ -80,12 +80,12 @@ export default class UIScene extends Phaser.Scene {
             let charIndex = 0;
             const typeEvent = this.time.addEvent({
                 delay: 18,
-                repeat: bsodLines.length - 1,
+                repeat: bsodLines.length,
                 callback: () => {
-                    charIndex++;
-                    bsodText.setText(bsodLines.substring(0, charIndex));
-
-                    if (charIndex >= bsodLines.length) {
+                    if (charIndex < bsodLines.length) {
+                        charIndex++;
+                        bsodText.setText(bsodLines.substring(0, charIndex));
+                    } else {
                         typeEvent.remove();
 
                         const rebootText = this.add.text(
@@ -94,15 +94,11 @@ export default class UIScene extends Phaser.Scene {
                             fontSize: "18px", color: "#ffffff",
                             fontFamily: PIXEL_FONT,
                         }).setDepth(51);
-
                         this.tweens.add({
                             targets: rebootText, alpha: 0,
                             duration: 500, yoyo: true, repeat: -1,
                         });
-
-                        const rKey = this.input.keyboard.addKey(
-                            Phaser.Input.Keyboard.KeyCodes.R
-                        );
+                        const rKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R);
                         rKey.once("down", () => {
                             EventBus.removeAllListeners();
                             this.scene.stop("UIScene");

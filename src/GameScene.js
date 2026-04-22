@@ -2,6 +2,7 @@ import * as Phaser from "phaser";
 import EventBus from "./systems/EventBus.js";
 import GlitchManager from "./systems/GlitchManager.js";
 import InputSystem from "./systems/InputSystem.js";
+import { BASE_VARIANTS } from "./config/constants.js";
 
 export default class GameScene extends Phaser.Scene {
     constructor() {
@@ -22,9 +23,8 @@ export default class GameScene extends Phaser.Scene {
             .rectangle(this.W / 2, this.H / 2, this.W, this.H, 0xffffff, 0)
             .setDepth(99);
 
-        const baseVariants = ["base_1", "base_1a", "base_2", "base_2a", "base_3", "base_4", "base_5"];
         this.robotBase = this.add
-            .image(this.W / 2, this.H / 2 - 20, Phaser.Math.RND.pick(baseVariants))
+            .image(this.W / 2, this.H / 2 - 20, Phaser.Math.RND.pick(BASE_VARIANTS))
             .setDisplaySize(220, 220)
             .setDepth(2)
             .setAlpha(0.2);
