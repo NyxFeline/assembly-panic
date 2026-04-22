@@ -7,46 +7,46 @@ export default class BootScene extends Phaser.Scene {
     }
 
     preload() {
-        this.load.image("head_1", "/assets/img/robot_head_1.png");
-        this.load.image("head_1a", "/assets/img/robot_head_1a.png");
-        this.load.image("head_2", "/assets/img/robot_head_2.png");
-        this.load.image("head_3", "/assets/img/robot_head_3.png");
-        this.load.image("head_4", "/assets/img/robot_head_4.png");
-        this.load.image("head_4a", "/assets/img/robot_head_4a.png");
-        this.load.image("head_5", "/assets/img/robot_head_5.png");
-        this.load.image("head_6", "/assets/img/robot_head_6.png");
-        this.load.image("head_7", "/assets/img/robot_head_7.png");
+        this.load.image("head_1", "assets/img/robot_head_1.png");
+        this.load.image("head_1a", "assets/img/robot_head_1a.png");
+        this.load.image("head_2", "assets/img/robot_head_2.png");
+        this.load.image("head_3", "assets/img/robot_head_3.png");
+        this.load.image("head_4", "assets/img/robot_head_4.png");
+        this.load.image("head_4a", "assets/img/robot_head_4a.png");
+        this.load.image("head_5", "assets/img/robot_head_5.png");
+        this.load.image("head_6", "assets/img/robot_head_6.png");
+        this.load.image("head_7", "assets/img/robot_head_7.png");
 
-        this.load.image("track_1", "/assets/img/robot_track_1.png");
-        this.load.image("track_2", "/assets/img/robot_track_2.png");
+        this.load.image("track_1", "assets/img/robot_track_1.png");
+        this.load.image("track_2", "assets/img/robot_track_2.png");
 
-        this.load.image("side_1", "/assets/img/robot_sideattach_1.png");
-        this.load.image("side_2", "/assets/img/robot_sideattach_2.png");
-        this.load.image("side_2a", "/assets/img/robot_sideattach_2a.png");
-        this.load.image("side_3", "/assets/img/robot_sideattach_3.png");
-        this.load.image("side_4", "/assets/img/robot_sideattach_4.png");
+        this.load.image("side_1", "assets/img/robot_sideattach_1.png");
+        this.load.image("side_2", "assets/img/robot_sideattach_2.png");
+        this.load.image("side_2a", "assets/img/robot_sideattach_2a.png");
+        this.load.image("side_3", "assets/img/robot_sideattach_3.png");
+        this.load.image("side_4", "assets/img/robot_sideattach_4.png");
 
-        this.load.image("back_1", "/assets/img/robot_backattach_1.png");
-        this.load.image("back_2", "/assets/img/robot_backattach_2.png");
-        this.load.image("back_3", "/assets/img/robot_backattach_3.png");
-        this.load.image("back_4", "/assets/img/robot_backattach_4.png");
-        this.load.image("back_5", "/assets/img/robot_backattach_5.png");
-        this.load.image("back_6", "/assets/img/robot_backattach_6.png");
+        this.load.image("back_1", "assets/img/robot_backattach_1.png");
+        this.load.image("back_2", "assets/img/robot_backattach_2.png");
+        this.load.image("back_3", "assets/img/robot_backattach_3.png");
+        this.load.image("back_4", "assets/img/robot_backattach_4.png");
+        this.load.image("back_5", "assets/img/robot_backattach_5.png");
+        this.load.image("back_6", "assets/img/robot_backattach_6.png");
 
-        this.load.image("base_1", "/assets/img/robot_base_1.png");
-        this.load.image("base_1a", "/assets/img/robot_base_1a.png");
-        this.load.image("base_2", "/assets/img/robot_base_2.png");
-        this.load.image("base_2a", "/assets/img/robot_base_2a.png");
-        this.load.image("base_3", "/assets/img/robot_base_3.png");
-        this.load.image("base_4", "/assets/img/robot_base_4.png");
-        this.load.image("base_5", "/assets/img/robot_base_5.png");
+        this.load.image("base_1", "assets/img/robot_base_1.png");
+        this.load.image("base_1a", "assets/img/robot_base_1a.png");
+        this.load.image("base_2", "assets/img/robot_base_2.png");
+        this.load.image("base_2a", "assets/img/robot_base_2a.png");
+        this.load.image("base_3", "assets/img/robot_base_3.png");
+        this.load.image("base_4", "assets/img/robot_base_4.png");
+        this.load.image("base_5", "assets/img/robot_base_5.png");
 
-        this.load.image("slot_frame", "/assets/img/slot_frame.png");
+        this.load.image("slot_frame", "assets/img/slot_frame.png");
 
-        this.load.audio("glitch", "/assets/sounds/glitch.ogg");
-        this.load.audio("bgm", "/assets/sounds/bgm.ogg");
-        this.load.audio("click", "/assets/sounds/click.ogg");
-        this.load.audio("error", "/assets/sounds/error.ogg");
+        this.load.audio("glitch", "assets/sounds/glitch.ogg");
+        this.load.audio("bgm", "assets/sounds/bgm.ogg");
+        this.load.audio("click", "assets/sounds/click.ogg");
+        this.load.audio("error", "assets/sounds/error.ogg");
     }
 
     create() {
